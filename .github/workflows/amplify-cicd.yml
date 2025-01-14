@@ -4,41 +4,42 @@ on:
   push:
     branches:
       - main # Trigger deployment on main branch push
-  pull_request:
-    branches:
-      - main # Optional: Trigger on pull requests to main branch
 
 jobs:
-  build:
+  deploy:
     runs-on: ubuntu-latest
 
     steps:
-      # Checkout the code from the repository
+      # Step 1: Checkout the repository
       - name: Checkout repository
         uses: actions/checkout@v2
 
-      # Set up Node.js environment
-      - name: Set up Node.jss
+      # Step 2: Set up Node.js
+      - name: Set up Node.js
         uses: actions/setup-node@v2
         with:
           node-version: '14' # Use the appropriate Node.js version
 
-      # Install Amplify CLI
+      # Step 3: Install Amplify CLI
       - name: Install Amplify CLI
         run: npm install -g @aws-amplify/cli
 
-      # Configure AWS CLI
+      # Step 4: Configure AWS Credentials
       - name: Set up AWS CLI
         uses: aws-actions/configure-aws-credentials@v1
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: ${{ secrets.AWS_REGION}}
+          aws-region: ${{ secrets.AWS_REGION }}
 
-      # Install dependencies for the project
-      - name: Install dependencies
-        run: npm install
+      # Step 5: Initialize Amplify environment (if it doesn't exist)
+      - name: Initialize Amplify Environment
+        run: |
+          amplify env list | grep "dev" || amplify env add \
+            --name dev \
+            --awsRegion ${{ secrets.AWS_REGION }} \
+            --yes
 
-      # Run Amplify push to deploy the app to AWS Amplify
+      # Step 6: Push environment and deploy
       - name: Deploy to AWS Amplify
         run: amplify push --yes
